@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<script src="https://js.stripe.com/v3/"></script>
+		<script src="jquery-3.4.1.min.js"></script>
+		<script>
+			$(document).ready(function() { 
+				// FIXME: This should be filled with Gaia's Stripe public key
+				var stripe = Stripe('pk_test_NmjuZqeo6K4XtwekaoS1nIzR001HiSw09z');
+				var elements = stripe.elements();
+				var cardElement = elements.create('card');
+				cardElement.mount('#card-element');
+
+				var cardholderName = $('#cardholder-name');
+				var cardButton = $('#card-button')[0];
+
+				$('#card-button').on('click', function(ev) { 
+					var secret = $('#client-secret-entry').val();
+					if (!secret) { 
+						alert('Error: You must enter the client secret');
+					}
+					else { 
+						$('#card-button').attr('data-secret', secret);
+						var clientSecret = cardButton.dataset.secret;
+						stripe.handleCardPayment(
+						    clientSecret, cardElement, {
+						      payment_method_data: {
+							billing_details: {name: cardholderName.value}
+						      }
+						    }
+						).then(function(result) {
+						    if (result.error) {
+							    alert('Error: ' + result.error.message);
+						    } else {
+							    alert('Success!');
+						    }
+						});
+					}
+				});
+			});
+		</script>
+	</head>
+	<body>
+		<h1>One time donation</h1>
+		<p>NOTE: This assumes a PaymentIntent has already been created. This is where the dollar amount goes</p>
+		<label for="client-secret-entry">Client Secret</label>
+		<input id="client-secret-entry" type="text" />
+		<label for="cardholder-name">Cardholder Name</label>
+		<input id="cardholder-name" type="text">
+		<!-- placeholder for Elements -->
+		<div id="card-element" style="border: 1px solid black;"></div>
+		<button id="card-button" data-secret="">Submit Payment</button>
+	</body>
+</html>
